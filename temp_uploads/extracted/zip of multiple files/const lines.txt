@@ -1,0 +1,26 @@
+const lines = items.map((item, idx) => {
+  const row = item.json;
+
+  // Build full article text
+  const textParts = [];
+  if (row.Title) textParts.push(row.Title);
+  if (row.Description) textParts.push(row.Description);
+  if (row.Body) textParts.push(row.Body);
+
+  const text = textParts.join("\n\n");
+
+  return JSON.stringify({
+    text: text || JSON.stringify(row),
+    metadata: {
+      title: row.Title || `row-${idx+1}`
+    }
+  });
+});
+
+return [{
+  binary: {
+    data: Buffer.from(lines.join("\n")).toString("base64"),
+    mimeType: "application/jsonl",
+    fileName: "articles.jsonl"
+  }
+}];
