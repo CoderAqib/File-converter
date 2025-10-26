@@ -5,6 +5,7 @@ from converters.docx_to_pdf import convert_docx_to_pdf
 from converters.txt_to_pdf import convert_txt_to_pdf
 from converters.image_to_pdf import convert_image_to_pdf
 from converters.zip_handler import handle_zip_file
+from converters.pdf_to_images import pdf_to_images_zip
 from utils.file_utils import get_file_extension, create_temp_dir
 
 # Configure logging
@@ -19,7 +20,7 @@ app = FastAPI(title="File Converter Hub API")
 UPLOAD_DIR = "temp_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@app.post("/convert")
+@app.post("/convert-to-pdf")
 async def convert_file(file: UploadFile = File(...)):
     ext = get_file_extension(file.filename)
     file_id = str(uuid.uuid4())
@@ -69,3 +70,33 @@ async def convert_file(file: UploadFile = File(...)):
         if os.path.exists(input_path):
             os.remove(input_path)
             logger.info(f"Cleaned up input file: {input_path}")
+
+@app.post("/pdf-to-images")
+async def pdf_to_images_endpoint(
+    file: UploadFile = File(...),
+    image_format: str = "png"
+):
+    """
+    Convert PDF to images (PNG, JPEG, JPG) and return ZIP of images.
+    """
+    allowed_formats = ["png", "jpeg", "jpg"]
+    fmt = image_format.lower()
+    if fmt not in allowed_formats:
+        raise HTTPException(status_code=400, detail=f"Invalid format. Choose from: {allowed_formats}")
+
+    file_id = str(uuid.uuid4())
+    input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
+    output_dir = os.path.join(UPLOAD_DIR, f"{file_id}_images")
+
+    # Save uploaded PDF
+    with open(input_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    logger.info(f"Converting PDF to images: {input_path} as {fmt}")
+    result = pdf_to_images_zip(input_path, output_dir, image_format=fmt)
+    zip_path = result["zip_file"]
+
+    if not os.path.exists(zip_path):
+        raise HTTPException(status_code=500, detail="Image conversion failed.")
+
+    return FileResponse(zip_path, filename="converted_images.zip", media_type="application/zip")
