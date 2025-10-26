@@ -1,10 +1,10 @@
-first install python 3.10.11
+first install python 3.10 or 3.11 in your system C drive
 
 ## install pandoc on your system using
-choco install pandoc -y
+enter command in powershell -> choco install pandoc -y
 
 ## install wkhtmltopdf on your system using
-choco install wkhtmltopdf -y
+enter command in powershell -> choco install wkhtmltopdf -y
 
 ## install poppler on your system 
 - go to: https://github.com/oschwartz10612/poppler-windows/releases/
